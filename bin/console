@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+require_relative '../lib/labourant'
+require 'awesome_pry'
+
+require 'dotenv'
+Dotenv.load
+
+Pry.start
