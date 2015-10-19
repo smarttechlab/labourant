@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+require_relative '../lib/labourant'
+
+require 'dotenv'
+Dotenv.load
+
+Labourant.start
