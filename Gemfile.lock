@@ -31,6 +31,7 @@ GEM
     mimemagic (0.3.0)
     multi_xml (0.5.5)
     multipart-post (2.0.0)
+    oauth (0.4.7)
     persistent_http (1.0.6)
       gene_pool (>= 1.3)
     persistent_httparty (0.1.2)
@@ -48,6 +49,8 @@ GEM
       persistent_httparty
       virtus
     thread_safe (0.3.5)
+    upwork-api (1.1.0)
+      oauth (>= 0.4.7)
     virtus (1.0.5)
       axiom-types (~> 0.1)
       coercible (~> 1.0)
@@ -61,6 +64,7 @@ DEPENDENCIES
   awesome_pry
   dotenv
   telegram-bot-ruby
+  upwork-api
 
 BUNDLED WITH
    1.10.6

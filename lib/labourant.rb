@@ -1,4 +1,5 @@
 require 'telegram/bot'
+require_relative 'labourant/upwork'
 
 module Labourant
   class << self
