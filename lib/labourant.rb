@@ -8,68 +8,53 @@ module Labourant
   class << self
     def start
       telegram.listen do |message|
+        user_id = message.chat.id
+
         case message.text
         when %r(/jobs (?<keywords>.*$))
           keywords = Regexp.last_match[:keywords]
-          last_searches[message.chat.id] = [keywords, 0]
-          telegram.api.send_message(chat_id: message.chat.id, text: "Searching for jobs with '#{keywords}'...")
+          last_searches[user_id] = [keywords, 0]
+          send_message("Searching for jobs with '#{keywords}'...", to: user_id)
 
-          response = upwork.find_jobs(q: keywords, limit: LIMIT)
-
-          if response['jobs'].empty?
-            telegram.api.send_message(chat_id: message.chat.id, text: 'No jobs found')
-          else
-            telegram.api.send_message(
-              chat_id: message.chat.id,
-              text: "Showing 1..#{response['jobs'].count} of #{response['paging']['total']} jobs:"
-            )
-
-            response['jobs'].each do |offer|
-              telegram.api.send_message(
-                chat_id: message.chat.id,
-                text: "[#{offer['title']}](#{offer['url']}) | #{offer['skills'].join(', ')}",
-                parse_mode: 'Markdown'
-              )
-            end
-          end
+          find_and_send_jobs(keywords, 0, user_id)
         when '/more'
-          if last_search = last_searches[message.chat.id]
+          if last_search = last_searches[user_id]
             new_offset = last_search.last + LIMIT
-            last_searches[message.chat.id] = [last_search.first, new_offset]
-            telegram.api.send_message(chat_id: message.chat.id, text: "Searching for more jobs with '#{last_search.first}'...")
+            last_searches[user_id] = [last_search.first, new_offset]
+            send_message("Searching for more jobs with '#{last_search.first}'...", to: user_id)
 
-            response = upwork.find_jobs(q: last_search.first, limit: LIMIT, offset: new_offset)
-
-            if response['jobs'].empty?
-              telegram.api.send_message(chat_id: message.chat.id, text: 'No jobs found')
-            else
-              telegram.api.send_message(
-                chat_id: message.chat.id,
-                text: "Showing #{new_offset + 1}..#{new_offset + response['jobs'].count} of #{response['paging']['total']} jobs:"
-              )
-
-              response['jobs'].each do |offer|
-                telegram.api.send_message(
-                  chat_id: message.chat.id,
-                  text: "[#{offer['title']}](#{offer['url']}) | #{offer['skills'].join(', ')}",
-                  parse_mode: 'Markdown'
-                )
-              end
-            end
+            find_and_send_jobs(last_search.first, new_offset, user_id)
           else
-            telegram.api.send_message(
-              chat_id: message.chat.id,
-              text: 'Use /jobs command first.'
-            )
+            send_message('Use /jobs command first.', to: user_id)
           end
         else
           file_id = 'AgADAgADqacxGyi26Afsf6Keo16E3KZjhCoABHn6hNmneqljmboAAgI'
-          telegram.api.send_photo(chat_id: message.chat.id, photo: file_id)
+          telegram.api.send_photo(chat_id: user_id, photo: file_id)
         end
       end
     end
 
   private
+    def find_and_send_jobs(keywords, offset, user_id)
+      response = upwork.find_jobs(q: keywords, limit: LIMIT, offset: offset)
+
+      if response['jobs'].empty?
+        send_message('No jobs found', to: user_id)
+      else
+        text = "Showing #{offset + 1}..#{offset + response['jobs'].count} of #{response['paging']['total']} jobs:"
+        send_message(text, to: user_id)
+
+        response['jobs'].each do |offer|
+          text = "[#{offer['title']}](#{offer['url']}) | #{offer['skills'].join(', ')}"
+          send_message(text, to: user_id, parse_mode: 'Markdown')
+        end
+      end
+    end
+
+    def send_message(message, to:, **options)
+      telegram.api.send_message(chat_id: to, text: message, **options)
+    end
+
     def last_searches
       @last_searches ||= {}
     end
